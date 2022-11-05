@@ -1,0 +1,113 @@
+managed implementation in class zbp_i_purchaseheadertp unique;
+strict ( 2 );
+with draft;
+define behavior for ZI_PurchaseHeaderTP alias PurchaseOrder
+persistent table zpoheader_db
+draft table zpoheader_db_dv1
+lock master
+total etag last_changed_at
+early numbering
+authorization master ( instance )
+
+etag master ChangedDateTime
+{
+  field ( readonly ) PurchaseOrderNumber, PurchaseTotalPrice;
+  field ( mandatory ) Description;
+  create;
+  update;
+  delete;
+  association _POItems { create; with draft; }
+  association _POAttachment {create;with draft;}
+  action Copy result [1] entity ZI_PurchaseHeaderTP;
+  action WithdrawApproval result [1] $self;
+
+  validation validateStatus on save { create; field OrderStatus; }
+
+  draft action Edit;
+  draft action Resume;
+  draft action Discard;
+  draft action Activate;
+  draft determine action Prepare
+  {
+    validation validateStatus;
+  }
+
+  mapping for zpoheader_db
+  {
+    PurchaseOrderNumber = po_order;
+    Description = po_desc;
+    CompanyCode = comp_code;
+    CreateBy = create_by;
+    CreatedDateTime = created_date_time;
+    ChangedDateTime = changed_date_time;
+    OrderType = po_type;
+    Organization = po_org;
+    OrderStatus = po_status;
+    Supplier = supplier;
+    LocalLastChangedBy = local_last_changed_by;
+    last_changed_at = last_changed_at;
+
+  }
+}
+
+define behavior for ZI_PurchaseItemsTP alias PurchaseItems
+implementation in class zbp_i_purchaseItemstp unique
+
+persistent table zpoitems_db
+draft table zpoitems_dbv1
+early numbering
+lock dependent by _PurchaseHeader
+authorization dependent by _PurchaseHeader
+etag master LocalLastChangedAt
+{
+  update;
+  delete;
+  field ( readonly ) PurchaseOrderNumber, PurchaseItem, ItemPrice;
+  association _PurchaseHeader { with draft; }
+  determination setPurchaseStatus on save { create; field ProductPrice, PriceUnit, OrderQunt, OrderUnit; }
+
+  // draft determine action Prepare
+  //  {
+  //  determination setPurchaseStatus;
+  //  }
+  mapping for ZPOITEMS_DB
+  {
+    PurchaseOrderNumber = po_order;
+    PurchaseItem = po_item;
+    ProductPrice = product_price;
+    Material = material;
+    MatGroup = mat_group;
+    PriceUnit = price_unit;
+    ShortText = short_text;
+    OrderQunt = order_qunt;
+    OrderUnit = order_unit;
+    Plant = plant;
+    LocalLastChangedBy = local_last_changed_by;
+    LocalLastChangedAt = local_last_changed_at;
+  }
+}
+
+define behavior for ZI_PO_ATTACHMENT alias Attachment
+implementation in class zbp_i_purchaseAttach unique
+
+persistent table zpo_attachment
+draft table zpo_attachment_d
+early numbering
+lock dependent by _Header
+authorization dependent by _Header
+etag master LastChangedAt
+{
+  field ( readonly ) Purchaseordernumber,attachId;
+  update;
+  delete;
+  association _Header { with draft; }
+  mapping for zpo_attachment
+  {
+    Purchaseordernumber = purchaseordernumber;
+    Attachment = attachment;
+    Filename = filename;
+    Mimetype = mimetype;
+    LastChangedAt = last_changed_at;
+    attachId = attah_id;
+  }
+}
