@@ -1,0 +1,5 @@
+@EndUserText.label: 'Service definition'
+define service ZsmC_POHEADER_DB_sd {
+  expose ZSMc_POHEADER_DB;
+  expose ZSMc_POITEMS_DB;
+}
